@@ -8,11 +8,14 @@
 	"mounts": [
 		"source=${localWorkspaceFolder},target=/workspace,type=bind"
 	],
-  "settings": {
-    "terminal.integrated.shell.linux": "/bin/sh"
-  },
-  "extensions": [
-    "nim-lang.nim"
-  ],
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.shell.linux": "/bin/sh"
+      },
+      "extensions": [
+        "nim-lang.nim"
+      ]
+    },
   "remoteUser": "root"
 }
