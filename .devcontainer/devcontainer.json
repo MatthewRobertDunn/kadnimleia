@@ -4,9 +4,9 @@
     "dockerfile": "../build.Dockerfile",
     "context": ".."
   },
-  "workspaceFolder": "/workspaces",
+  "workspaceFolder": "/workspace",
   "mounts": [
-    "source=${localWorkspaceFolder},target=/workspaces,type=bind"
+    "source=${localWorkspaceFolder},target=/workspace,type=bind"
   ],
   "customizations": {
     "vscode": {
@@ -16,7 +16,7 @@
       "extensions": [
         "nim-lang.nim"
       ]
-    },
-    "remoteUser": "root"
-  }
+    }
+  },
+  "remoteUser": "root"
 }
