@@ -141,3 +141,5 @@ proc insertOrUpdate* (self: RoutingTable, node: Uri): Future =
         return
     let bucketIndex = self.localNodeId.bucketIndex(nodeId.get)
     return self.insertOrUpdateBucket(self.table[bucketIndex], node, nodeId)
+
+#hi there

@@ -11,7 +11,8 @@
   "customizations": {
     "vscode": {
       "settings": {
-        "terminal.integrated.shell.linux": "/bin/sh"
+        "terminal.integrated.shell.linux": "/bin/sh",
+        "git.autorefresh": true
       },
       "extensions": [
         "nimsaem.nimvscode"
