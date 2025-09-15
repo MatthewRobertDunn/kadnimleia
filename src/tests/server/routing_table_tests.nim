@@ -5,7 +5,6 @@ import std/options
 import ../../server/routing_table
 import ../../common/types
 
-
 test "URI encoding":
     var expectedId: NodeId
     if not urandom(expectedId):

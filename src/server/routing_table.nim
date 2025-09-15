@@ -4,7 +4,11 @@ import stew/base64
 import std/options
 import std/parseutils
 import strutils
-from ../common/types import HASH_SIZE, HASH_SIZE_BYTES, NodeId
+import std/sequtils
+import ../common/types
+import ../common/seq_utils
+import std/asyncdispatch
+from std/sugar import `=>`
 
 const VALID_SCHEMES = @["tcp"]
 proc isValidKadUri(self: Uri): bool =
@@ -67,36 +71,73 @@ proc bucketIndex*(self: NodeId, other: NodeId): int =
     return 0
 
 
-type BucketEntry* = object
+type BucketEntry* = ref object
     node: Uri
+    nodeId: NodeId
     lastSeen: DateTime
 
-type RoutingTable* = object
-    localUri: Uri   #our local name and address eg kad://nodeid@ip:port
+type Bucket = seq[BucketEntry]
+
+proc findByNodeId(self: Bucket, nodeId: NodeId): BucketEntry =
+    let entries = self.filterIt(it.nodeId == nodeId)
+    if(entries.len == 0):
+        return nil
+    elif(entries.len == 1):
+        return entries[0]
+    else:
+        raise newException(ValueError, "Unexpected duplicates in bucket")
+
+type RoutingTable* = ref object
+    localNode: Uri   #our local name and address eg kad://nodeid@ip:port
     localNodeId: NodeId
-    k: int
-    table: array[HASH_SIZE - 1, seq[BucketEntry]]
+    maxEntries: int
+    table: array[HASH_SIZE + 1, Bucket]
+    resolveNode: proc(node: Uri): KademliaInterface
 
 
-proc newRoutingTable* (localUri: Uri) : RoutingTable =
-    let localNodeId = localUri.toNodeId()
+proc newRoutingTable* (localNode: Uri) : RoutingTable =
+    let localNodeId = localNode.toNodeId()
     if (localNodeId.isNone):
         raise newException(ValueError, "Invalid local Uri")
     #initialize a new table array, wonder if this is correctly done
-    var table: array[HASH_SIZE - 1 , seq[BucketEntry]]
-    for i in 0..<(HASH_SIZE - 1):
+    var table: array[HASH_SIZE + 1, Bucket]
+    for i in 0..HASH_SIZE:
         table[i] = @[]
     return RoutingTable(
-                        localUri: localUri,
-                        localNodeId: localNodeId.get,
-                        k: 20,
-                        table: table
+                            localNode: localNode,
+                            localNodeId: localNodeId.get,
+                            maxEntries: 20,
+                            table: table
                         )
+   
+const PING_TIMEOUT = 5000
 
+proc insertOrUpdateBucket(self: RoutingTable, bucket: var Bucket, node: Uri, nodeId: NodeId) {.async.} =
+     #check if we already know this node
+    let bucketEntry = bucket.findByNodeId(nodeId)
+    if(bucketEntry != nil):
+        bucketEntry.node = node
+        bucketEntry.lastSeen = now()
+        return
 
+    if(bucket.len >= self.maxEntries):
+        let oldestEntry = bucket.minBy(x => x.lastSeen)
+        let proxy = self.resolveNode(oldestEntry.node)
+        try:
+            
+            if(await proxy.ping().withTimeout(PING_TIMEOUT)):
+                #ping was a success, just update last seen and exit
+                oldestEntry.lastSeen = now()
+                return
+        except:
+            discard
+        #Add new entry
+        let newEntry = BucketEntry(node: node, nodeId: nodeId, lastSeen: now())
+        bucket.add(newEntry)
 
-    
-
-
-
-
+proc insertOrUpdate* (self: RoutingTable, node: Uri): Future = 
+    let nodeId = node.toNodeId()
+    if(nodeId.isNone):
+        return
+    let bucketIndex = self.localNodeId.bucketIndex(nodeId.get)
+    return self.insertOrUpdateBucket(self.table[bucketIndex], node, nodeId)
