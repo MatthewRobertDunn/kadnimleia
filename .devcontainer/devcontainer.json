@@ -14,7 +14,7 @@
         "terminal.integrated.shell.linux": "/bin/sh"
       },
       "extensions": [
-        "nim-lang.nim"
+        "nimsaem.nimvscode"
       ]
     }
   },

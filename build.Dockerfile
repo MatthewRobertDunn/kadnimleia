@@ -1,3 +1,3 @@
 FROM nimlang/nim:2.2.4-alpine-regular as build
 RUN apk add --no-cache gdb git build-base
-RUN nimble install zmq
+RUN nimble install zmq stew
