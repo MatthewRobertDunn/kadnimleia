@@ -1,3 +1,8 @@
-# Ignore all files in /src/
-src/*/*
-!src/*/*.nim
+# Ignore everything in src
+src/**
+
+# Unignore all directories recursively
+!src/**/
+
+# Unignore .nim files recursively
+!src/**/*.nim
