@@ -1,1 +1,3 @@
-/src/*[^.]
+# Ignore all files in /src/
+src/*/*
+!src/*/*.nim

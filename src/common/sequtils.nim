@@ -40,4 +40,3 @@ proc remove*[T: Equateable](s: var seq[T], item: T) =
   let index = s.find(item)
   if index >= 0:
     s.del(index)
-  
