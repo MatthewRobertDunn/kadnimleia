@@ -16,6 +16,7 @@ type BucketEntryObj* = object
 type BucketEntry* = ref BucketEntryObj    
 
 type BucketObj = object
+    index*: int
     entries: seq[BucketEntry]
     lock: Lock
 
@@ -24,8 +25,8 @@ type Bucket* = ref BucketObj
 proc `=destroy`(self: BucketObj) =
     deinitLock(self.lock)
 
-proc newBucket*(): Bucket = 
-    let bucket = Bucket()
+proc newBucket*(index: int): Bucket = 
+    let bucket = Bucket(index: index)
     initLock(bucket.lock)
     return bucket
 

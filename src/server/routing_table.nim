@@ -5,6 +5,7 @@ import ../common/types
 import std/asyncdispatch
 import std/async
 import buckets
+import std/strformat
 
 type RoutingTable* = ref object
     localNode: Uri   #our local name and address eg kad://nodeid@ip:port
@@ -20,7 +21,7 @@ proc newRoutingTable* (localNode: Uri, reolveNodeProxy: ResolveNodeProxy) : Rout
     #initialize a new table array, wonder if this is correctly done
     var table: array[HASH_SIZE + 1, Bucket]
     for i in 0..HASH_SIZE:
-        table[i] = newBucket()
+        table[i] = newBucket(index = i)
     return RoutingTable(
                             localNode: localNode,
                             localNodeId: localNodeId.get,
@@ -63,6 +64,10 @@ proc insertOrUpdate* (self: RoutingTable, node: Uri) {.async.} =
         except:
             #ping wasn't a success, remove old entry, new one will be added
             bucket.remove(oldestEntry)
-        #Add new entry
-        let newEntry = BucketEntry(node: node, nodeId: nodeId, lastSeen: now())
-        bucket.add(newEntry)
+    #Add new entry
+    let newEntry = BucketEntry(node: node, nodeId: nodeId, lastSeen: now())
+    bucket.add(newEntry)
+
+proc getBucketSnapshot*(self: RoutingTable, nodeId: NodeId): (seq[BucketEntryObj], int) =
+    let bucket = self.getBucketByNodeId(nodeId)
+    return (bucket.toSeq(), bucket.index)

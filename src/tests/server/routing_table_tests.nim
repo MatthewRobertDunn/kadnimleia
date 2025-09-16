@@ -58,8 +58,11 @@ test "insert node into empty routing table":
     let myNode = newKadUri(myNodeId, "127.0.0.1", "1234")
     var otherNodeId: NodeId
     otherNodeId[2] = 0xFF
+    let expectedBucketIndex = myNodeId.bucketIndex(otherNodeId)
     let otherNode = newKadUri(otherNodeId, "127.0.0.2", "1234")
     let routingTable = newRoutingTable(myNode, nil)
     await routingTable.insertOrUpdate(otherNode)
-  
+    let (bucket, bucketIndex) = routingTable.getBucketSnapshot(otherNodeId)
+    assert(bucket.len == 1, fmt"Got {bucket.len} expected 1")
+    assert(bucketIndex == expectedBucketIndex, fmt"Got {bucketIndex} expected {expectedBucketIndex}")
   waitFor(test())
